@@ -69,6 +69,27 @@ def admin_get():
     if not s_id or s_id not in store:
         return jsonify({"error":"not found"}), 404
     return jsonify({"script": store[s_id]["script"], "meta": {"created_at": store[s_id]["created_at"]}})
+# ---------- PING (RESET STORE) ----------
+@app.route("/ping", methods=["GET"])
+def ping():
+    """
+    - Keep Render alive
+    - Xoá toàn bộ script cũ
+    - Ghi đè bằng 1 script rác
+    """
+    global scripts
+
+    noise_id = "noise"
+    scripts = {
+        noise_id: {
+"run_key": "noise",
+            "script": gen_noise(20),
+            "created_at": int(time.time())
+        }
+    }
+
+    save_json(SCRIPT_DB, scripts)
+    return "pong", 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")))
