@@ -71,29 +71,109 @@ def add_script():
         "run_key": run_key
     })
 
-# ---------- RUN SCRIPT ----------
-@app.route("/run", methods=["GET"])
+@app.route("/run", methods=["GET", "POST"])
 def run_script():
-    s_id = request.args.get("id")
-    key = request.args.get("key")
+    store = _load_store()
 
-    if not s_id or not key:
-        return "missing id/key", 400
+    script_id = request.args.get("id")
+    run_key   = request.args.get("key")
 
-    store = load_store()
-    entry = store.get(s_id)
+    if not script_id or not run_key:
+        return "-- missing id or key", 400
 
-    if not entry:
-        return "not found", 404
+    # =========================
+    # GET → FAKE OBF
+    # =========================
+    if request.method == "GET":
+        fake = """--[[ TinhSuper Obfuscated Script ]]
+local __a=123456
+local __b=654321
+for i=1,1000 do
+    local _x = math.random() * math.random()
+end
+-- decrypting payload...
+-- validating environment...
+-- execution complete
+"""
+        return fake, 200, {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+            "Content-Encoding": "identity"
+        }
 
-    if key != entry["run_key"]:
-        return "invalid key", 403
+    # =========================
+    # POST → REAL SCRIPT
+    # =========================
+    try:
+        if script_id not in store:
+            return "-- invalid id", 404
 
-    entry["run_count"] += 1
-    save_store(store)
+        entry = store[script_id]
+        if run_key != entry.get("run_key"):
+            return "-- invalid key", 403
 
-    # ⭐ TRẢ RAW LUA – KHÔNG BROTLI
-    return raw_text_response(entry["script"])
+        entry["run_count"] = entry.get("run_count", 0) + 1
+        _save_store(store)
+
+        return entry["script"], 200, {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+            "Content-Encoding": "identity"
+        }
+
+    except Exception:
+        return "-- server error", 500@app.route("/run", methods=["GET", "POST"])
+def run_script():
+    store = _load_store()
+
+    script_id = request.args.get("id")
+    run_key   = request.args.get("key")
+
+    if not script_id or not run_key:
+        return "-- missing id or key", 400
+
+    # =========================
+    # GET → FAKE OBF
+    # =========================
+    if request.method == "GET":
+        fake = """--[[ TinhSuper Obfuscated Script ]]
+local __a=123456
+local __b=654321
+for i=1,1000 do
+    local _x = math.random() * math.random()
+end
+-- decrypting payload...
+-- validating environment...
+-- execution complete
+"""
+        return fake, 200, {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+            "Content-Encoding": "identity"
+        }
+
+    # =========================
+    # POST → REAL SCRIPT
+    # =========================
+    try:
+        if script_id not in store:
+            return "-- invalid id", 404
+
+        entry = store[script_id]
+        if run_key != entry.get("run_key"):
+            return "-- invalid key", 403
+
+        entry["run_count"] = entry.get("run_count", 0) + 1
+        _save_store(store)
+
+        return entry["script"], 200, {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+            "Content-Encoding": "identity"
+        }
+
+    except Exception:
+        return "-- server error", 500
 
 # ---------- ADMIN GET ----------
 @app.route("/admin/get", methods=["GET"])
