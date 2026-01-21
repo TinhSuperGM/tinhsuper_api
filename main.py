@@ -73,7 +73,7 @@ def add_script():
 
 @app.route("/run", methods=["GET", "POST"])
 def run_script():
-    store = _load_store()
+    store = load_store()
 
     script_id = request.args.get("id")
     run_key   = request.args.get("key")
@@ -113,7 +113,7 @@ end
             return "-- invalid key", 403
 
         entry["run_count"] = entry.get("run_count", 0) + 1
-        _save_store(store)
+        save_store(store)
 
         return entry["script"], 200, {
             "Content-Type": "text/plain; charset=utf-8",
@@ -124,7 +124,7 @@ end
     except Exception:
         return "-- server error", 500@app.route("/run", methods=["GET", "POST"])
 def run_script():
-    store = _load_store()
+    store = load_store()
 
     script_id = request.args.get("id")
     run_key   = request.args.get("key")
@@ -164,7 +164,7 @@ end
             return "-- invalid key", 403
 
         entry["run_count"] = entry.get("run_count", 0) + 1
-        _save_store(store)
+        save_store(store)
 
         return entry["script"], 200, {
             "Content-Type": "text/plain; charset=utf-8",
